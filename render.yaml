@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cloud-9-wifi
+    name: cloud-9-tower-wifi
     env: node
     plan: free
     buildCommand: npm install
