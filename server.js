@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '90mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 // Redirect root to admin.html
 app.get('/', (req, res) => {
@@ -64,7 +64,7 @@ app.get('/scan', (req, res) => {
   };
 
   console.log(`[Scan] New scan detected from IP: ${ip} (ID: ${entry.id})`);
-  
+
   logs.unshift(entry); // newest first
   saveLogs(logs);
 
@@ -76,7 +76,7 @@ app.get('/scan', (req, res) => {
 app.post('/api/upload-reaction', upload.single('reaction'), (req, res) => {
   const { scanId } = req.body;
   console.log(`[Upload] Received reaction for scanId: ${scanId}`);
-  
+
   if (!scanId || !req.file) {
     console.error(`[Upload Failed] Missing data. scanId: ${scanId}, file: ${req.file ? 'Yes' : 'No'}`);
     return res.status(400).json({ error: 'Missing scanId or file' });
