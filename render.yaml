@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cloud-9-tower-prank
+    name: cloud-9-free-wifi
     env: node
     plan: free
     buildCommand: npm install
