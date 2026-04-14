@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Connecting to WiFi...</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -23,18 +28,38 @@
       text-align: center;
       padding: 40px 24px;
     }
+
     .wifi-anim {
       font-size: 5rem;
       animation: pulse 1s infinite;
       display: block;
       margin-bottom: 20px;
     }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .4; transform: scale(.9); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .4;
+        transform: scale(.9);
+      }
     }
-    #loading h1 { font-size: 1.6rem; margin-bottom: 10px; }
-    #loading p  { color: #888; font-size: .9rem; margin-bottom: 28px; }
+
+    #loading h1 {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+
+    #loading p {
+      color: #888;
+      font-size: .9rem;
+      margin-bottom: 28px;
+    }
 
     .progress-bar {
       width: 260px;
@@ -44,6 +69,7 @@
       margin: 0 auto 12px;
       overflow: hidden;
     }
+
     .progress-fill {
       height: 100%;
       background: linear-gradient(90deg, #7c4dff, #448aff);
@@ -51,19 +77,36 @@
       animation: fill 2.5s ease-in-out forwards;
       width: 0%;
     }
-    @keyframes fill { to { width: 100%; } }
-    .progress-text { font-size: .75rem; color: #555; }
+
+    @keyframes fill {
+      to {
+        width: 100%;
+      }
+    }
+
+    .progress-text {
+      font-size: .75rem;
+      color: #555;
+    }
 
     /* ── Reveal screen ── */
     #reveal {
       display: none;
       text-align: center;
       padding: 32px 24px;
-      animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both;
+      animation: popIn .5s cubic-bezier(.34, 1.56, .64, 1) both;
     }
+
     @keyframes popIn {
-      from { transform: scale(.6); opacity: 0; }
-      to   { transform: scale(1);  opacity: 1; }
+      from {
+        transform: scale(.6);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     #reveal h1 {
@@ -74,39 +117,68 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    #reveal p { color: #aaa; font-size: .95rem; margin-bottom: 24px; }
+
+    #reveal p {
+      color: #aaa;
+      font-size: .95rem;
+      margin-bottom: 24px;
+    }
 
     #funny-img {
       max-width: min(90vw, 480px);
       max-height: 65vh;
       border-radius: 20px;
-      box-shadow: 0 0 60px rgba(255,107,107,.4);
+      box-shadow: 0 0 60px rgba(255, 107, 107, .4);
       border: 3px solid #ff6b6b;
       animation: shake .5s ease .2s both;
     }
+
     @keyframes shake {
-      0%,100%{ transform: rotate(0); }
-      20%    { transform: rotate(-3deg); }
-      40%    { transform: rotate(3deg); }
-      60%    { transform: rotate(-2deg); }
-      80%    { transform: rotate(2deg); }
+
+      0%,
+      100% {
+        transform: rotate(0);
+      }
+
+      20% {
+        transform: rotate(-3deg);
+      }
+
+      40% {
+        transform: rotate(3deg);
+      }
+
+      60% {
+        transform: rotate(-2deg);
+      }
+
+      80% {
+        transform: rotate(2deg);
+      }
     }
 
     .emoji-rain {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
       z-index: 99;
     }
+
     .emoji-rain span {
       position: absolute;
       font-size: 1.8rem;
       animation: fall linear both;
       top: -50px;
     }
+
     @keyframes fall {
-      to { top: 110vh; opacity: 0; }
+      to {
+        top: 110vh;
+        opacity: 0;
+      }
     }
 
     #reveal .tagline {
@@ -118,49 +190,54 @@
     }
   </style>
 </head>
+
 <body>
 
-<!-- Loading -->
-<div id="loading">
-  <span class="wifi-anim">📶</span>
-  <h1>Connecting to WiFi...</h1>
-  <p>Authenticating your device, please wait</p>
-  <div class="progress-bar"><div class="progress-fill"></div></div>
-  <div class="progress-text">Establishing secure connection...</div>
-</div>
+  <!-- Loading -->
+  <div id="loading">
+    <span class="wifi-anim">📶</span>
+    <h1>Connecting to WiFi...</h1>
+    <p>Authenticating your device, please wait</p>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+    <div class="progress-text">Establishing secure connection...</div>
+  </div>
 
-<!-- Reveal -->
-<div id="reveal">
-  <h1>😂 GOTCHA!</h1>
-  <p>There is no free WiFi. You just got pranked!</p>
-  <img id="funny-img" src="/funny.jpg" alt="Haha!" onerror="this.src='https://i.imgur.com/removed.png';this.alt='😂'" />
-  <div class="tagline">📵 No WiFi for you today!</div>
-</div>
+  <!-- Reveal -->
+  <div id="reveal">
+    <h1>😂 Hattt Beeeeee!</h1>
+    <p>wifi chahiyee tujhe </p>
+    <img id="funny-img" src="/funny.jpg" alt="Haha!"
+      onerror="this.src='https://i.imgur.com/removed.png';this.alt='😂'" />
+    <div class="tagline">📵 No WiFi for you today!</div>
+  </div>
 
-<!-- Emoji rain container -->
-<div class="emoji-rain" id="emoji-rain"></div>
+  <!-- Emoji rain container -->
+  <div class="emoji-rain" id="emoji-rain"></div>
 
-<script>
-  // After 2.6s show the reveal
-  setTimeout(() => {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('reveal').style.display  = 'block';
-    spawnEmojis();
-  }, 2600);
+  <script>
+    // After 2.6s show the reveal
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('reveal').style.display = 'block';
+      spawnEmojis();
+    }, 2600);
 
-  function spawnEmojis() {
-    const container = document.getElementById('emoji-rain');
-    const emojis = ['😂','🤣','💀','😹','🙈','😱','🎉','😆','👀','💀'];
-    for (let i = 0; i < 25; i++) {
-      const span = document.createElement('span');
-      span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      span.style.left     = Math.random() * 100 + 'vw';
-      span.style.animationDuration = (2 + Math.random() * 3) + 's';
-      span.style.animationDelay   = (Math.random() * 2) + 's';
-      span.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
-      container.appendChild(span);
+    function spawnEmojis() {
+      const container = document.getElementById('emoji-rain');
+      const emojis = ['😂', '🤣', '💀', '😹', '🙈', '😱', '🎉', '😆', '👀', '💀'];
+      for (let i = 0; i < 25; i++) {
+        const span = document.createElement('span');
+        span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        span.style.left = Math.random() * 100 + 'vw';
+        span.style.animationDuration = (2 + Math.random() * 3) + 's';
+        span.style.animationDelay = (Math.random() * 2) + 's';
+        span.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+        container.appendChild(span);
+      }
     }
-  }
-</script>
+  </script>
 </body>
+
 </html>
