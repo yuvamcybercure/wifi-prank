@@ -3,12 +3,21 @@ const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const LOGS_FILE = path.join(__dirname, 'scan_logs.json');
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
-app.use(express.json());
+// Setup multer for image processing
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => cb(null, `reaction-${uuidv4()}.jpg`)
+});
+const upload = multer({ storage });
+
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 // Redirect root to admin.html
 app.get('/', (req, res) => {
@@ -46,12 +55,34 @@ app.get('/scan', (req, res) => {
     ip,
     userAgent: req.headers['user-agent'] || 'Unknown',
     referer: req.headers['referer'] || 'Direct Scan',
+    reaction: null
   };
 
   logs.unshift(entry); // newest first
   saveLogs(logs);
 
-  res.sendFile(path.join(__dirname, 'public', 'reveal.html'));
+  res.send(`<!DOCTYPE html>
+    <script>
+      sessionStorage.setItem('currentScanId', '${entry.id}');
+      window.location.href = '/reveal.html';
+    </script>
+  `);
+});
+
+// ─── API: Upload reaction photo ──────────────────────────────────────────
+app.post('/api/upload-reaction', upload.single('reaction'), (req, res) => {
+  const { scanId } = req.body;
+  if (!scanId || !req.file) return res.status(400).json({ error: 'Missing scanId or file' });
+
+  const logs = readLogs();
+  const index = logs.findIndex(l => l.id === scanId);
+  if (index !== -1) {
+    logs[index].reaction = `/uploads/${req.file.filename}`;
+    saveLogs(logs);
+    res.json({ ok: true });
+  } else {
+    res.status(404).json({ error: 'Scan log not found' });
+  }
 });
 
 // ─── API: get scan logs ────────────────────────────────────────────────────
