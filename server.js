@@ -63,12 +63,8 @@ app.get('/scan', (req, res) => {
   logs.unshift(entry); // newest first
   saveLogs(logs);
 
-  res.send(`<!DOCTYPE html>
-    <script>
-      sessionStorage.setItem('currentScanId', '${entry.id}');
-      window.location.href = '/reveal.html';
-    </script>
-  `);
+  console.log(`[Scan] New scan detected from IP: ${ip} (ID: ${entry.id})`);
+  res.redirect(`/reveal.html?scanId=${entry.id}`);
 });
 
 // ─── API: Upload reaction photo ──────────────────────────────────────────

