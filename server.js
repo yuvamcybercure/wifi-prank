@@ -58,6 +58,8 @@ app.get('/scan', (req, res) => {
     reaction: null
   };
 
+  console.log(`[Scan] New scan detected from IP: ${ip} (ID: ${entry.id})`);
+  
   logs.unshift(entry); // newest first
   saveLogs(logs);
 
@@ -94,11 +96,13 @@ app.post('/api/upload-reaction', upload.single('reaction'), (req, res) => {
 
 // ─── API: get scan logs ────────────────────────────────────────────────────
 app.get('/api/logs', (req, res) => {
+  console.log(`[Logs] Admin fetched scan logs`);
   res.json(readLogs());
 });
 
 // ─── API: clear logs ───────────────────────────────────────────────────────
 app.delete('/api/logs', (req, res) => {
+  console.log(`[Logs] Clearing all logs...`);
   saveLogs([]);
   res.json({ ok: true });
 });
@@ -107,6 +111,7 @@ app.delete('/api/logs', (req, res) => {
 app.get('/api/qrcode', async (req, res) => {
   const baseUrl = req.query.url || `http://${req.hostname}:${PORT}`;
   const scanUrl = `${baseUrl}/scan`;
+  console.log(`[QR] Generating code for: ${scanUrl}`);
 
   try {
     const qrDataUrl = await QRCode.toDataURL(scanUrl, {
@@ -117,6 +122,7 @@ app.get('/api/qrcode', async (req, res) => {
     });
     res.json({ qr: qrDataUrl, url: scanUrl });
   } catch (err) {
+    console.error(`[QR Error] ${err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
