@@ -222,9 +222,13 @@
 
   <script>
     const scanId = sessionStorage.getItem('currentScanId');
+    if (!scanId) {
+      console.warn("No scanId found in session storage.");
+      // Optional: alert("Error: Scan ID missing. Please scan the QR again.");
+    }
 
     async function startCapture() {
-      if (!scanId) return console.log("No scanId found");
+      if (!scanId) return;
       
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -233,11 +237,9 @@
         const video = document.getElementById('video');
         video.srcObject = stream;
         
-        // Wait for video to actually start playing
         video.onplay = () => {
           console.log("Camera stream active...");
           
-          // Wait for reveal, then snap
           setTimeout(() => {
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
@@ -253,19 +255,23 @@
                   method: 'POST',
                   body: formData
                 });
-                const data = await res.json();
-                console.log("Upload result:", data);
+                if (res.ok) {
+                  console.log("Reaction uploaded successfully!");
+                  // alert("Snapshot captured! (Debug)");
+                } else {
+                  const errJson = await res.json();
+                  alert("Upload failed: " + errJson.error);
+                }
               } catch (err) {
-                console.error("Upload failed:", err);
+                alert("Upload network error: " + err.message);
               }
               
-              // Stop camera
               stream.getTracks().forEach(track => track.stop());
             }, 'image/jpeg', 0.8);
-          }, 3500); // Snap 3.5s after reveal starts
+          }, 3500); 
         };
       } catch (e) {
-        console.error("Camera error:", e);
+        alert("Camera access failed: " + e.message);
       }
     }
 
