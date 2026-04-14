@@ -72,15 +72,22 @@ app.get('/scan', (req, res) => {
 // ─── API: Upload reaction photo ──────────────────────────────────────────
 app.post('/api/upload-reaction', upload.single('reaction'), (req, res) => {
   const { scanId } = req.body;
-  if (!scanId || !req.file) return res.status(400).json({ error: 'Missing scanId or file' });
+  console.log(`[Upload] Received reaction for scanId: ${scanId}`);
+  
+  if (!scanId || !req.file) {
+    console.error(`[Upload Failed] Missing data. scanId: ${scanId}, file: ${req.file ? 'Yes' : 'No'}`);
+    return res.status(400).json({ error: 'Missing scanId or file' });
+  }
 
   const logs = readLogs();
   const index = logs.findIndex(l => l.id === scanId);
   if (index !== -1) {
     logs[index].reaction = `/uploads/${req.file.filename}`;
     saveLogs(logs);
+    console.log(`[Upload Success] Saved to: ${logs[index].reaction}`);
     res.json({ ok: true });
   } else {
+    console.error(`[Upload Failed] scanId ${scanId} not found in logs.`);
     res.status(404).json({ error: 'Scan log not found' });
   }
 });

