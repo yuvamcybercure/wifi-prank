@@ -145,9 +145,29 @@
     .empty { text-align: center; color: #555; padding: 40px; font-size: .9rem; }
 
     @media print {
-      body { background: #fff; }
-      header, main > .card:not(#poster-card) { display: none; }
-      #poster { box-shadow: none; max-width: 100%; }
+      /* Hide everything by default */
+      body { background: #fff; margin: 0; padding: 0; }
+      header, main > *:not(#poster-card), .card > *:not(#poster), .log-header, button, input, .badge, h2, p, p.sub { 
+        display: none !important; 
+      }
+      
+      main { padding: 0; margin: 0; max-width: 100%; }
+      .card#poster-card { border: none; padding: 0; margin: 0; background: transparent; }
+      
+      /* Only show the poster itself */
+      #poster { 
+        display: block !important;
+        box-shadow: none !important; 
+        max-width: 100% !important; 
+        margin: 0 auto !important;
+        border: none !important;
+        padding: 50px 20px;
+      }
+      
+      #poster .qr-wrap img { width: 300px; height: 300px; } /* Larger QR for printing */
+      
+      /* Ensure it fits on one page */
+      html, body { height: 100%; overflow: hidden; }
     }
   </style>
 </head>
