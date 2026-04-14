@@ -23,7 +23,8 @@ const ScanLogSchema = new mongoose.Schema({
   ip: String,
   userAgent: String,
   referer: String,
-  reaction: String
+  reaction: String,
+  brightness: Number
 });
 const ScanLog = mongoose.model('ScanLog', ScanLogSchema);
 
@@ -84,7 +85,10 @@ app.post('/api/upload-reaction', upload.single('reaction'), async (req, res) => 
   try {
     const updated = await ScanLog.findOneAndUpdate(
       { scanId },
-      { reaction: `/uploads/${req.file.filename}` },
+      { 
+        reaction: `/uploads/${req.file.filename}`,
+        brightness: req.body.brightness || 0
+      },
       { new: true }
     );
     
