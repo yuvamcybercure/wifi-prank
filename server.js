@@ -10,6 +10,11 @@ const PORT = process.env.PORT || 3000;
 const LOGS_FILE = path.join(__dirname, 'scan_logs.json');
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
+// Ensure uploads directory exists on startup
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
 // Setup multer for image processing
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),
